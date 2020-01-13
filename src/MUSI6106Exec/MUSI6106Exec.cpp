@@ -62,7 +62,7 @@ int main(int argc, char* argv[])
         phAudioFile->readData(ppfAudioData, numFrames);
         for (int i = 0; i < numFrames; i++)
         {
-            for (int c = 0; c < stFileSpec.iNumChannels; c++)
+            for (int c = 0; c < numChannels; c++)
             {
                 hOutputFile << ppfAudioData[c][i] << "\t";
             }
