@@ -34,8 +34,8 @@ int main(int argc, char* argv[])
     //////////////////////////////////////////////////////////////////////////////
     // parse command line arguments
     // command: $ ./MUSI6106Exec audioFile txtFile
-    sInputFilePath = "/Users/caspia/Desktop/spring20/MUSI 6106/audio/sweep.wav";
-    sOutputFilePath = "/Users/caspia/Desktop/spring20/MUSI 6106/audio/sweep.txt";
+    sInputFilePath = argv[1]; //"/Users/caspia/Desktop/spring20/MUSI 6106/audio/sweep.wav";
+    sOutputFilePath = argv[2]; //"/Users/caspia/Desktop/spring20/MUSI 6106/audio/sweep.txt";
  
     //////////////////////////////////////////////////////////////////////////////
     // open the input wave file
