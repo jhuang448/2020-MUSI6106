@@ -94,6 +94,8 @@ public:
     */
     Error_t process (float **ppfInputBuffer, float **ppfOutputBuffer, int iNumberOfFrames);
 
+    void printStatus();
+
 protected:
     CCombFilterIf ();
     virtual ~CCombFilterIf ();

@@ -1,5 +1,7 @@
 
 // standard headers
+#include<math.h>
+#include<iostream>
 
 // project headers
 #include "MUSI6106Config.h"
@@ -7,10 +9,12 @@
 #include "ErrorDef.h"
 #include "Util.h"
 
+#include "CombFilter.h"
 #include "CombFilterIf.h"
 
-static const char*  kCMyProjectBuildDate             = __DATE__;
+using namespace std;
 
+static const char*  kCMyProjectBuildDate             = __DATE__;
 
 CCombFilterIf::CCombFilterIf () :
     m_bIsInitialized(false),
@@ -56,35 +60,75 @@ const char*  CCombFilterIf::getBuildDate ()
 
 Error_t CCombFilterIf::create( CCombFilterIf*& pCCombFilter)
 {
+    pCCombFilter = new CCombFilterIf();
     return kNoError;
 }
 
 Error_t CCombFilterIf::destroy (CCombFilterIf*& pCCombFilter)
 {
+    // delete CCombFilterBase
+    delete pCCombFilter;
+    pCCombFilter = 0;
     return kNoError;
 }
 
 Error_t CCombFilterIf::init( CombFilterType_t eFilterType, float fMaxDelayLengthInS, float fSampleRateInHz, int iNumChannels )
 {
+    float maxDelayLength = floor(fMaxDelayLengthInS * fSampleRateInHz);
+    this->m_fSampleRate = fSampleRateInHz;
+
+    // initialize CCombFilterBase here
+    this->m_pCCombFilter = new CCombFilterBase();
+    this->m_pCCombFilter->init(eFilterType, maxDelayLength, iNumChannels);
+
+    this->m_bIsInitialized = true;
+    
     return kNoError;
 }
 
 Error_t CCombFilterIf::reset ()
 {
+    if (m_bIsInitialized)
+        delete m_pCCombFilter;
+    m_bIsInitialized = false;
+    m_fSampleRate = 0;
+
     return kNoError;
 }
 
 Error_t CCombFilterIf::process( float **ppfInputBuffer, float **ppfOutputBuffer, int iNumberOfFrames )
 {
-    return kNoError;
+    return this->m_pCCombFilter->processChannels(ppfInputBuffer, ppfOutputBuffer, iNumberOfFrames);
 }
 
 Error_t CCombFilterIf::setParam( FilterParam_t eParam, float fParamValue )
 {
+    if (eParam == kParamDelay)  // convert delay in seconds to delay in samples
+        fParamValue *= this->m_fSampleRate;
+    this->m_pCCombFilter->setParam(eParam, fParamValue);
+
     return kNoError;
 }
 
 float CCombFilterIf::getParam( FilterParam_t eParam ) const
 {
-    return 0;
+    float fParamValue = this->m_pCCombFilter->getParam(eParam);
+    if (eParam == kParamDelay)  // convert delay in seconds to delay in samples
+        fParamValue /= this->m_fSampleRate;
+    return fParamValue;
+}
+
+void CCombFilterIf::printStatus()
+{
+    cout << "------------Print CCombFilterIf Status:------------" << endl;
+    if (!m_bIsInitialized)
+        cout << "Not initialized..." << endl;
+    else{
+        cout << "sample rate: " << this->m_fSampleRate << endl;
+        if (!this->m_pCCombFilter)
+            cout << "CCombFilter not initialized..." << endl;
+        else
+            this->m_pCCombFilter->printStatus();
+    }
+    return;
 }
