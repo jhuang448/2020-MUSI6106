@@ -11,15 +11,22 @@
 using std::cout;
 using std::endl;
 
-// local function declarations
+// util functions
 void    showClInfo ();
 static void show_usage(char *argv);
 
-void genSin(float*& sinBuffer, float fSampleRateInHz, float inputFreq, float inputInSecond, float fAmp = 1);
-int    test_FIR();
-int    test_zeros();
+void genSin(float*& sinBuffer, float fSampleRateInHz, float inputFreq, float inputInSecond, float fAmp = 100);
+void   testBlockUnit(float** ppfSinBuffer, float**& ppfAudioDataOutBuffer, int iNumChannels, int blockSize, int iNumBlock, CCombFilterIf::CombFilterType_t combFilterType);
 
-const float  PI_F=3.14159265358979f;
+// test functions
+int    testFIR();
+int    testIIR();
+int    testBlock();
+int    testZeros();
+int    testZeroDelay();
+
+// constant variable PI (high preicsion needed)
+const double PI  =3.141592653589793238463;
 
 /////////////////////////////////////////////////////////////////////////////////
 // main function
@@ -27,7 +34,7 @@ int main(int argc, char* argv[])
 {
     std::string             sInputFilePath,                 //!< file paths
                             sOutputFilePath,
-                            filterType;
+                            sFilterType;
     
     static const int        kBlockSize = 1024;
 
@@ -55,16 +62,19 @@ int main(int argc, char* argv[])
         cout << endl << "Run tests..." << endl;
         
         // test 1
-        test_FIR();
+        testFIR();
 
         // test 2
+        testIIR();
         
         // test 3
-        
+        testBlock();
+
         // test 4
-        test_zeros();
+        testZeros();
         
         // test 5
+        testZeroDelay();
         
         return 0;
     }
@@ -84,8 +94,8 @@ int main(int argc, char* argv[])
         } else if ((arg == "-o") || (arg == "--output")) {
             sOutputFilePath = argv[++i];
         } else if ((arg == "-t") || (arg == "--filter_type")) {
-            filterType = argv[++i];
-            if (filterType != "FIR" && filterType != "IIR"){
+            sFilterType = argv[++i];
+            if (sFilterType != "FIR" && sFilterType != "IIR"){
                 cout << "Invalid filter type!" << endl;
                 show_usage(argv[0]);
                 return -1;
@@ -95,6 +105,11 @@ int main(int argc, char* argv[])
         } else if ((arg == "-d") || (arg == "--delay")) {
             delayInSecond = std::stof(argv[++i]);
         }
+        else{
+            cout << "Invalid input arguments." << endl;
+            show_usage(argv[0]);
+            return -1;
+        }
     }
 
 //    sInputFilePath = "/Users/caspia/Desktop/spring20/MUSI 6106/audio/sweep.wav"; //argv[1];
@@ -103,7 +118,7 @@ int main(int argc, char* argv[])
 //    delayInSecond = 0.05;
 //    gain = 0.1;
     
-    if (filterType == "FIR") //FIR
+    if (sFilterType == "FIR") //FIR
         combFilterType = CCombFilterIf::kCombFIR;
     else // IIR
         combFilterType = CCombFilterIf::kCombIIR;
@@ -151,13 +166,13 @@ int main(int argc, char* argv[])
         long long iNumFrames = kBlockSize;
         phAudioFileInput->readData(ppfAudioData, iNumFrames);
 
-        cout << "\r" << "reading and writing";
+        cout << "\r" << "reading and processing";
 
         phCombFilter->process(ppfAudioData, ppfAudioData, iNumFrames);
         phAudioFileOutput->writeData(ppfAudioData, iNumFrames);
     }
 
-    cout << "\nreading/writing done in: \t" << (clock() - time)*1.F / CLOCKS_PER_SEC << " seconds." << endl;
+    cout << "\nreading/processing done in: \t" << (clock() - time)*1.F / CLOCKS_PER_SEC << " seconds." << endl;
 
     //////////////////////////////////////////////////////////////////////////////
     // clean-up
@@ -187,10 +202,10 @@ static void show_usage(char *argv)
     << std::endl;
 }
 
-// test_FIR
-// test FIR on one block of sinusoid, delay = half of the period
+// testFIR: freq matches feedforward
+// input: sinusoid, delay: half of the period
 // the output should be zero
-int test_FIR() // TODO: replace 1 with inumchannels
+int testFIR()
 {
     static const int        kBlockSize = 1024;
     long long               iNumFrames = kBlockSize;
@@ -200,7 +215,7 @@ int test_FIR() // TODO: replace 1 with inumchannels
     
     CCombFilterIf           *phCombFilter = 0;
     
-    CCombFilterIf::CombFilterType_t combFilterType = CCombFilterIf::kCombFIR;
+    CCombFilterIf::CombFilterType_t combFilterType = CCombFilterIf::kCombFIR;   // FIR
     
     int                     iNumChannels = 1;
     float                   fSampleRateInHz = 44100;
@@ -211,7 +226,7 @@ int test_FIR() // TODO: replace 1 with inumchannels
     int                     iDelayInSample = static_cast<int>(fDelayInSecond * fSampleRateInHz);
     int                     iNumBlocks = floor(fSampleRateInHz * fInputInSecond / kBlockSize);
     
-    cout << "Start test 1..." << endl;
+    cout << "----------Start Test 1----------" << endl;
 
 //    cout << "delay in second: " << fDelayInSecond << endl;
 //    cout << "delay in sample: " << iDelayInSample << endl;
@@ -261,22 +276,278 @@ int test_FIR() // TODO: replace 1 with inumchannels
 
     CCombFilterIf::destroy(phCombFilter);
 
-    delete ppfAudioData[0];
-    delete ppfAudioData;
-    delete ppfAudioDataO[0];
-    delete ppfAudioDataO;
-    delete ppfSinBuffer[0];
-    delete ppfSinBuffer;
+    delete [] ppfAudioData[0];
+    delete [] ppfAudioData;
+    delete [] ppfAudioDataO[0];
+    delete [] ppfAudioDataO;
+    delete [] ppfSinBuffer[0];
+    delete [] ppfSinBuffer;
     
     cout << "Test1 passed." << endl;
     
     return 0;
 }
 
+// testIIR: freq matches feedback
+// input: sinusoid, delay: period
+// output: increasing amplitude
+// input: sinusoid, delay: half of period
+// output: decreasing amplitude
+int testIIR()
+{
+    static const int        kBlockSize = 1024;
+    long long               iNumFrames = kBlockSize;
+    
+    float                   **ppfSinBuffer = 0;    // generate sinusoid here
+    float                   **ppfAudioData = 0, **ppfAudioDataO = 0;
+    
+    CCombFilterIf           *phCombFilter = 0;
+    
+    CCombFilterIf::CombFilterType_t combFilterType = CCombFilterIf::kCombIIR;   // IIR
+    
+    int                     iNumChannels = 1;
+    float                   fSampleRateInHz = 44100;
+    float                   fInputFreq = 50, fInputInSecond = 3;
+    float                   fGain = 0.1;
+    float                   fDelayInSecond = 1 / fInputFreq;
+
+    int                     iDelayInSample = static_cast<int>(fDelayInSecond * fSampleRateInHz);
+    int                     iNumBlocks = floor(fSampleRateInHz * fInputInSecond / kBlockSize);
+    
+    cout << "----------Start Test 2----------" << endl;
+
+   // cout << "delay in second: " << fDelayInSecond << endl;
+   // cout << "delay in sample: " << iDelayInSample << endl;
+   // cout << "input frequency: " << fInputFreq << endl;
+
+    ppfAudioData = new float*[1];
+    ppfAudioData[0] = new float[kBlockSize];
+    ppfAudioDataO = new float*[1];
+    ppfAudioDataO[0] = new float[kBlockSize];
+    
+    // set zero
+    for (int i = 0; i < kBlockSize; i++)
+        ppfAudioData[0][i] = 0;
+
+    // generate sinusoid
+    ppfSinBuffer = new float*[1];
+    genSin(ppfSinBuffer[0], fSampleRateInHz, fInputFreq, fInputInSecond);
+    
+
+    // check: increasing amplitude: delay = period
+    fDelayInSecond = 1 / fInputFreq;
+    iDelayInSample = static_cast<int>(fDelayInSecond * fSampleRateInHz);
+
+    // instantiate combfilter
+    CCombFilterIf::create(phCombFilter);
+    phCombFilter->init(combFilterType, 1, fSampleRateInHz, iNumChannels);
+    phCombFilter->setParam(CCombFilterIf::kParamGain, fGain);
+    phCombFilter->setParam(CCombFilterIf::kParamDelay, fDelayInSecond);
+    //phCombFilter->printStatus();
+    
+    for (int i = 0; i < iNumBlocks; i++){
+        // read a block from ppfSinBuffer
+        for (int c = 0; c < iNumChannels; c++)
+            memcpy(ppfAudioData[c], &ppfSinBuffer[c][i * kBlockSize], kBlockSize * sizeof(float));
+        
+        // apply FIR
+        phCombFilter->process(ppfAudioData, ppfAudioDataO, iNumFrames);
+
+        // check increasing amplitude
+        int st = 0;
+        if (i == 0)
+            st = iDelayInSample;
+        for (int c = 0; c < iNumChannels; c++)
+            for (int j = st; j < kBlockSize; j++) {
+                // ignore zero
+                if (abs(ppfAudioData[c][j]) > 1.0e-10 && abs(ppfAudioDataO[c][j]) < abs(ppfAudioData[c][j])){
+                    cout << "Test2: increasing amplitude check failed." << endl;
+                    cout << j << ' ' << ppfAudioData[c][j] << " " << ppfAudioDataO[c][j] << endl;
+                    return -1;
+                }
+            }
+    }
+
+    CCombFilterIf::destroy(phCombFilter);
+
+
+    // check: decreasing amplitude: delay = period / 2
+    fDelayInSecond = 1 / fInputFreq / 2;
+    iDelayInSample = static_cast<int>(fDelayInSecond * fSampleRateInHz);
+
+    // instantiate combfilter
+    CCombFilterIf::create(phCombFilter);
+    phCombFilter->init(combFilterType, 1, fSampleRateInHz, iNumChannels);
+    phCombFilter->setParam(CCombFilterIf::kParamGain, fGain);
+    phCombFilter->setParam(CCombFilterIf::kParamDelay, fDelayInSecond);
+    //phCombFilter->printStatus();
+    
+    for (int i = 0; i < iNumBlocks; i++){
+        // read a block from ppfSinBuffer
+        for (int c = 0; c < iNumChannels; c++)
+            memcpy(ppfAudioData[c], &ppfSinBuffer[c][i * kBlockSize], kBlockSize * sizeof(float));
+        
+        // apply FIR
+        phCombFilter->process(ppfAudioData, ppfAudioDataO, iNumFrames);
+
+        // check decreasing amplitude
+        int st = 0;
+        if (i == 0)
+            st = iDelayInSample;
+        for (int c = 0; c < iNumChannels; c++)
+            for (int j = st; j < kBlockSize; j++) {
+                // ignore zero
+                if (abs(ppfAudioData[c][j]) > 1.0e-10 && abs(ppfAudioDataO[c][j]) > abs(ppfAudioData[c][j])){
+                    cout << "Test2: decreasing amplitude check failed." << endl;
+                    cout << j << ' ' << ppfAudioData[c][j] << " " << ppfAudioDataO[c][j] << endl;
+                    return -1;
+                }
+            }
+    }
+
+    CCombFilterIf::destroy(phCombFilter);
+
+    delete [] ppfAudioData[0];
+    delete [] ppfAudioData;
+    delete [] ppfAudioDataO[0];
+    delete [] ppfAudioDataO;
+    delete [] ppfSinBuffer[0];
+    delete [] ppfSinBuffer;
+    
+    cout << "Test2 passed." << endl;
+    
+    return 0;
+}
+
+// test_block: varying block
+// blocksize: 1024, 500
+int testBlock()
+{
+    int                     kBlockSize1 = 1024, kBlockSize2 = 500;  // 2 different block sizes
+    
+    float                   **ppfSinBuffer = 0;    // generate sinusoid her
+
+    float                   **ppfOutBuffer1 = 0, **ppfOutBuffer2 = 0;
+    
+    CCombFilterIf::CombFilterType_t combFilterType = CCombFilterIf::kCombFIR;   // FIR
+    
+    int                     iNumChannels = 1;
+    // params for sinusoid
+    float                   fSampleRateInHz = 44100;
+    float                   fInputFreq = 50, fInputInSecond = 3;
+
+    int                     iNumBlocks1 = floor(fSampleRateInHz * fInputInSecond / kBlockSize1);
+    int                     iNumBlocks2 = floor(fSampleRateInHz * fInputInSecond / kBlockSize2);
+    
+    cout << "----------Start Test 3----------" << endl;
+
+//    cout << "delay in second: " << fDelayInSecond << endl;
+//    cout << "delay in sample: " << iDelayInSample << endl;
+//    cout << "input frequency: " << fInputFreq << endl;
+
+        // generate sinusoid
+    ppfSinBuffer = new float*[1];
+    genSin(ppfSinBuffer[0], fSampleRateInHz, fInputFreq, fInputInSecond);
+    int iSinLen = static_cast<int>(fInputInSecond * fSampleRateInHz);
+    
+    ppfOutBuffer1 = new float*[1];
+    ppfOutBuffer1[0] = new float[iSinLen];
+    ppfOutBuffer2 = new float*[1];
+    ppfOutBuffer2[0] = new float[iSinLen];
+
+    testBlockUnit(ppfSinBuffer, ppfOutBuffer1, iNumChannels, kBlockSize1, iNumBlocks1, combFilterType);
+    testBlockUnit(ppfSinBuffer, ppfOutBuffer2, iNumChannels, kBlockSize2, iNumBlocks2, combFilterType);
+
+    for (int c = 0; c < iNumChannels; c++){
+        for (int i = 0; i < iNumBlocks1 * kBlockSize1 && i < iNumBlocks2 * kBlockSize2; i++){
+            if (ppfOutBuffer1[c][i] != ppfOutBuffer2[c][i]){
+                cout << "Test3 failed for FIR." << endl;
+                cout << i << " " << ppfOutBuffer1[c][i] << " " << ppfOutBuffer2[c][i] << endl;
+                return -1;
+            }
+        }
+    }
+
+    combFilterType = CCombFilterIf::kCombIIR;   // IIR
+    testBlockUnit(ppfSinBuffer, ppfOutBuffer1, iNumChannels, kBlockSize1, iNumBlocks1, combFilterType);
+    testBlockUnit(ppfSinBuffer, ppfOutBuffer2, iNumChannels, kBlockSize2, iNumBlocks2, combFilterType);
+
+    for (int c = 0; c < iNumChannels; c++){
+        for (int i = 0; i < iNumBlocks1 * kBlockSize1 && i < iNumBlocks2 * kBlockSize2; i++){
+            if (ppfOutBuffer1[c][i] != ppfOutBuffer2[c][i]){
+                cout << "Test3 failed for IIR." << endl;
+                cout << i << " " << ppfOutBuffer1[c][i] << " " << ppfOutBuffer2[c][i] << endl;
+                return -1;
+            }
+        }
+    }
+
+    delete [] ppfSinBuffer[0];
+    delete [] ppfSinBuffer;
+    delete [] ppfOutBuffer1[0];
+    delete [] ppfOutBuffer1;
+    delete [] ppfOutBuffer2[0];
+    delete [] ppfOutBuffer2;
+    
+    cout << "Test3 passed." << endl;
+    
+    return 0;
+}
+
+void testBlockUnit(float** ppfSinBuffer, float**& ppfAudioDataOutBuffer, int iNumChannels, int blockSize, int iNumBlocks, CCombFilterIf::CombFilterType_t combFilterType)
+{
+    long long               iNumFrames = blockSize;
+    
+    float                   **ppfAudioData = 0, **ppfAudioDataO = 0;
+    
+    CCombFilterIf           *phCombFilter = 0;
+    
+    float                   fSampleRateInHz = 44100;
+    float                   fGain = 1;
+    float                   fDelayInSecond = 0.00227;
+
+    assert(iNumChannels == 1);
+
+    ppfAudioData = new float*[1];
+    ppfAudioData[0] = new float[blockSize];
+    ppfAudioDataO = new float*[1];
+    ppfAudioDataO[0] = new float[blockSize];
+    
+    // set zero
+    for (int i = 0; i < blockSize; i++)
+        ppfAudioData[0][i] = 0;
+
+    // instantiate combfilter
+    CCombFilterIf::create(phCombFilter);
+    phCombFilter->init(combFilterType, 1, fSampleRateInHz, iNumChannels);
+    phCombFilter->setParam(CCombFilterIf::kParamGain, fGain);
+    phCombFilter->setParam(CCombFilterIf::kParamDelay, fDelayInSecond);
+    //phCombFilter->printStatus();
+    
+    for (int i = 0; i < iNumBlocks; i++){
+        // read a block from ppfSinBuffer
+        for (int c = 0; c < iNumChannels; c++)
+            memcpy(ppfAudioData[c], &ppfSinBuffer[c][i * blockSize], blockSize * sizeof(float));
+        
+        // apply FIR
+        phCombFilter->process(ppfAudioData, ppfAudioDataO, iNumFrames);
+
+        for (int c = 0; c < iNumChannels; c++)
+            memcpy(&ppfAudioDataOutBuffer[c][i * blockSize], ppfAudioDataO[c], blockSize * sizeof(float));
+    }
+
+    CCombFilterIf::destroy(phCombFilter);
+
+    delete [] ppfAudioData[0];
+    delete [] ppfAudioData;
+    delete [] ppfAudioDataO[0];
+    delete [] ppfAudioDataO;
+}
+
 // test_zeros
 // test FIR & IIR on one block of zero input
 // the output should be zero
-int test_zeros()
+int testZeros()
 {
     static const int        kBlockSize = 1024;
     long long               iNumFrames = kBlockSize;
@@ -291,7 +562,7 @@ int test_zeros()
     float                   fSampleRateInHz = 44100;
     float                   fDelayInSecond = 0.00227, fGain = 1;         // freq: 441 Hz
     
-    cout << "Start test 4..." << endl;
+    cout << "----------Start Test 4----------" << endl;
 
     ppfAudioData = new float*[1];
     ppfAudioData[0] = new float[kBlockSize];
@@ -340,12 +611,95 @@ int test_zeros()
         }
     CCombFilterIf::destroy(phCombFilter);
     
-    delete ppfAudioData[0];
-    delete ppfAudioData;
-    delete ppfAudioDataO[0];
-    delete ppfAudioDataO;
+    delete [] ppfAudioData[0];
+    delete [] ppfAudioData;
+    delete [] ppfAudioDataO[0];
+    delete [] ppfAudioDataO;
     
     cout << "Test4 passed." << endl;
+    
+    return 0;
+}
+
+int testZeroDelay()
+{
+    static const int        kBlockSize = 1024;
+    long long               iNumFrames = kBlockSize;
+    
+    float                   **ppfSinBuffer = 0;    // generate sinusoid here
+    float                   **ppfAudioData = 0, **ppfAudioDataO = 0;
+    
+    CCombFilterIf           *phCombFilter = 0;
+    
+    CCombFilterIf::CombFilterType_t combFilterType = CCombFilterIf::kCombFIR;   // FIR
+    
+    int                     iNumChannels = 1;
+    float                   fSampleRateInHz = 44100;
+    float                   fInputFreq = 50, fInputInSecond = 3;
+    float                   fGain = 1;
+    float                   fDelayInSecond = 0;     // zero delay
+
+    int                     iDelayInSample = static_cast<int>(fDelayInSecond * fSampleRateInHz);
+    int                     iNumBlocks = floor(fSampleRateInHz * fInputInSecond / kBlockSize);
+    
+    cout << "----------Start Test 5----------" << endl;
+
+//    cout << "delay in second: " << fDelayInSecond << endl;
+//    cout << "delay in sample: " << iDelayInSample << endl;
+//    cout << "input frequency: " << fInputFreq << endl;
+
+    ppfAudioData = new float*[1];
+    ppfAudioData[0] = new float[kBlockSize];
+    ppfAudioDataO = new float*[1];
+    ppfAudioDataO[0] = new float[kBlockSize];
+    
+    // set zero
+    for (int i = 0; i < kBlockSize; i++)
+        ppfAudioData[0][i] = 0;
+
+    // generate sinusoid
+    ppfSinBuffer = new float*[1];
+    genSin(ppfSinBuffer[0], fSampleRateInHz, fInputFreq, fInputInSecond);
+    
+    // instantiate combfilter
+    CCombFilterIf::create(phCombFilter);
+    phCombFilter->init(combFilterType, 1, fSampleRateInHz, iNumChannels);
+    phCombFilter->setParam(CCombFilterIf::kParamGain, fGain);
+    phCombFilter->setParam(CCombFilterIf::kParamDelay, fDelayInSecond);
+    //phCombFilter->printStatus();
+    
+    for (int i = 0; i < iNumBlocks; i++){
+        // read a block from ppfSinBuffer
+        for (int c = 0; c < iNumChannels; c++)
+            memcpy(ppfAudioData[c], &ppfSinBuffer[c][i * kBlockSize], kBlockSize * sizeof(float));
+        
+        // apply FIR
+        phCombFilter->process(ppfAudioData, ppfAudioDataO, iNumFrames);
+
+        // check zero
+        int st = 0;
+        if (i == 0)
+            st = iDelayInSample;
+        for (int c = 0; c < iNumChannels; c++)
+            for (int j = st; j < kBlockSize; j++) {
+                if (ppfAudioDataO[c][j] != ppfAudioData[c][j]){
+                    cout << "Test5 failed for FIR." << endl;
+                    cout << ppfAudioDataO[c][j] << endl;
+                    return -1;
+                }
+            }
+    }
+
+    CCombFilterIf::destroy(phCombFilter);
+
+    delete [] ppfAudioData[0];
+    delete [] ppfAudioData;
+    delete [] ppfAudioDataO[0];
+    delete [] ppfAudioDataO;
+    delete [] ppfSinBuffer[0];
+    delete [] ppfSinBuffer;
+    
+    cout << "Test5 passed." << endl;
     
     return 0;
 }
@@ -356,7 +710,7 @@ void genSin(float*& pfSinBuffer, float fSampleRateInHz, float fInputFreq, float 
     pfSinBuffer = new float[sinLen];
 
     for (int i = 0; i < sinLen; i++){
-        pfSinBuffer[i] = fAmp * sin(2 * PI_F * fInputFreq / fSampleRateInHz * i);
+        pfSinBuffer[i] = fAmp * sin((2.F * PI * fInputFreq / fSampleRateInHz) * i);
     }
 
     return;

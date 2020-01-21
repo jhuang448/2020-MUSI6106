@@ -81,18 +81,25 @@ Error_t CCombFilterBase::processChannels(float **ppfAudioDataIn, float **ppfAudi
                 return kMemError;
             
 			cur = *pfAudioDataInCur;
-			// update output
-			*pfAudioDataOutCur = cur + this->gain * this->delayBuffer[c][this->delayStart[c]];
-			// update buffer
-			if (this->eFilterType == kCombFIR)
-				this->delayBuffer[c][this->delayStart[c]] = cur;
-			else
-				this->delayBuffer[c][this->delayStart[c]] = ppfAudioDataOut[c][i];
+            
+            if (this->delayLength != 0){
+                // update output
+                *pfAudioDataOutCur = cur + this->gain * this->delayBuffer[c][this->delayStart[c]];
+                // update buffer
+                if (this->eFilterType == kCombFIR)
+                    this->delayBuffer[c][this->delayStart[c]] = cur;
+                else
+                    this->delayBuffer[c][this->delayStart[c]] = ppfAudioDataOut[c][i];
 
+                this->delayStart[c] = (this->delayStart[c] + 1) % this->delayLength;
+            }
+            else    // copy input to output
+                *pfAudioDataOutCur = cur;
+            
+            // move pointers
             pfAudioDataInCur++;
             pfAudioDataOutCur++;
-			this->delayStart[c] = (this->delayStart[c] + 1) % this->delayLength;
-		}
+        }
 	}
 
 	return kNoError;
