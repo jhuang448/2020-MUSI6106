@@ -17,16 +17,9 @@ CCombFilterBase::~CCombFilterBase()
 	delete this->delayBuffer;
 }
 
-// get filter type
-int CCombFilterBase::getFilterType() const
-{
-	return static_cast<int>(this->eFilterType);
-}
-
 // initialize a comb filter instance
-Error_t CCombFilterBase::init (int eFilterType, float maxDelayLength, int iNumChannels)
+Error_t CCombFilterBase::init (float maxDelayLength, int iNumChannels)
 {
-	this->eFilterType = eFilterType;
 	this->maxDelayLength = static_cast<int>(maxDelayLength);
 	this->iNumChannels = iNumChannels;
 	this->delayBuffer = new float*[iNumChannels];
@@ -66,7 +59,7 @@ float   CCombFilterBase::getParam (int eParam) const
 }
 
 // process one block of audio (multiple channels)
-Error_t CCombFilterBase::processChannels(float **ppfAudioDataIn, float **ppfAudioDataOut, int iNumFrames)
+Error_t CCombFilterFIR::processChannels(float **ppfAudioDataIn, float **ppfAudioDataOut, int iNumFrames)
 {
 	// iterate over channels
 	for (int c = 0; c < this->iNumChannels; c++) {
@@ -86,10 +79,7 @@ Error_t CCombFilterBase::processChannels(float **ppfAudioDataIn, float **ppfAudi
                 // update output
                 *pfAudioDataOutCur = cur + this->gain * this->delayBuffer[c][this->delayStart[c]];
                 // update buffer
-                if (this->eFilterType == kCombFIR)
-                    this->delayBuffer[c][this->delayStart[c]] = cur;
-                else
-                    this->delayBuffer[c][this->delayStart[c]] = ppfAudioDataOut[c][i];
+                this->delayBuffer[c][this->delayStart[c]] = cur;
 
                 this->delayStart[c] = (this->delayStart[c] + 1) % this->delayLength;
             }
@@ -105,11 +95,57 @@ Error_t CCombFilterBase::processChannels(float **ppfAudioDataIn, float **ppfAudi
 	return kNoError;
 }
 
+Error_t CCombFilterIIR::processChannels(float **ppfAudioDataIn, float **ppfAudioDataOut, int iNumFrames)
+{
+	// iterate over channels
+	for (int c = 0; c < this->iNumChannels; c++) {
+
+		// process one channel
+		float cur = 0;
+        float *pfAudioDataInCur = ppfAudioDataIn[c], *pfAudioDataOutCur = ppfAudioDataOut[c];
+		
+		for (int i = 0; i < iNumFrames; i++) {
+
+            if (!pfAudioDataOutCur || !pfAudioDataInCur)
+                return kMemError;
+            
+			cur = *pfAudioDataInCur;
+            
+            if (this->delayLength != 0){
+                // update output
+                *pfAudioDataOutCur = cur + this->gain * this->delayBuffer[c][this->delayStart[c]];
+                // update buffer
+                this->delayBuffer[c][this->delayStart[c]] = ppfAudioDataOut[c][i];
+
+                this->delayStart[c] = (this->delayStart[c] + 1) % this->delayLength;
+            }
+            else    // copy input to output
+                *pfAudioDataOutCur = cur;
+            
+            // move pointers
+            pfAudioDataInCur++;
+            pfAudioDataOutCur++;
+        }
+	}
+
+	return kNoError;
+}
+
+int CCombFilterFIR::getFilterType()
+{
+	return kCombFIR;
+}
+
+int CCombFilterIIR::getFilterType()
+{
+	return kCombIIR;
+}
+
 void CCombFilterBase::printStatus(int level)
 {
 	cout << "------------Print CCombFilterBase Status:------------" << endl;
 	if (level >= 0){
-		cout << "eFilterType: " << this->eFilterType << endl;
+        cout << "eFilterType: " << this->getFilterType() << endl;
 		cout << "iNumChannels: " << this->iNumChannels << endl;
 		cout << "maxDelayLength: " << this->maxDelayLength << endl;
 	}

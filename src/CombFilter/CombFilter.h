@@ -26,12 +26,10 @@ public:
         kNumFilterParams
     };
 
-    ~CCombFilterBase ();
-
-	int getFilterType() const;
+    virtual ~CCombFilterBase ();
 
 	// initialize a comb filter instance
-	Error_t init (int eFilterType, float maxDelayLength, int iNumChannels);
+	Error_t init (float maxDelayLength, int iNumChannels);
 
 	// sets a comb filter parameter
 	Error_t setParam (int eParam, float fParamValue);
@@ -40,17 +38,15 @@ public:
 	float   getParam (int eParam) const;
 
 	// process one block of audio (multiple channels)
-	Error_t processChannels (float **ppfInputBuffer, float **ppfOutputBuffer, int iNumberOfFrames);
+	// realized in derived classes: the only difference between FIR & IIR is what to write into the buffer
+	virtual Error_t processChannels (float **ppfInputBuffer, float **ppfOutputBuffer, int iNumberOfFrames) = 0;
     
-	// process one block of audio (one channel)
-    Error_t processOneChannel (float *pfInputBuffer, float *pfOutputBuffer, int iNumberOfFrames);
-
+	virtual int getFilterType() = 0;
 
     void printStatus (int level = 2);
 
-private:
+protected:
 	// members initialized in init()
-	int 				eFilterType;
 	int 				iNumChannels;
     int 				maxDelayLength;
 
@@ -61,6 +57,23 @@ private:
 	// members used in computation
 	float				**delayBuffer;		// delay buffer: space allocated in the construction function
 	int					*delayStart;			// start position in the buffer for the current delay
+};
+
+// create two derived classes to avoid checking the filter type when processing every frame
+class CCombFilterFIR: public CCombFilterBase
+{
+public:
+	int getFilterType();
+	Error_t processChannels (float **ppfInputBuffer, float **ppfOutputBuffer, int iNumberOfFrames);
+	//~CCombFilterFIR();
+};
+
+class CCombFilterIIR: public CCombFilterBase
+{
+public:
+	int getFilterType();
+	Error_t processChannels (float **ppfInputBuffer, float **ppfOutputBuffer, int iNumberOfFrames);   
+	//~CCombFilterIIR();
 };
 
 #endif //__CombFilter_hdr__

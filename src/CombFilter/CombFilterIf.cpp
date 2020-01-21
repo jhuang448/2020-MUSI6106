@@ -78,8 +78,12 @@ Error_t CCombFilterIf::init( CombFilterType_t eFilterType, float fMaxDelayLength
     this->m_fSampleRate = fSampleRateInHz;
 
     // initialize CCombFilterBase here
-    this->m_pCCombFilter = new CCombFilterBase();
-    this->m_pCCombFilter->init(eFilterType, maxDelayLength, iNumChannels);
+    if (eFilterType == kCombFIR)
+        this->m_pCCombFilter = new CCombFilterFIR();
+    else if (eFilterType == kCombIIR)
+        this->m_pCCombFilter = new CCombFilterIIR();
+    
+    this->m_pCCombFilter->init(maxDelayLength, iNumChannels);
 
     this->m_bIsInitialized = true;
     
