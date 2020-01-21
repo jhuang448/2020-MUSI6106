@@ -51,6 +51,7 @@ int main(int argc, char* argv[])
     CCombFilterIf::CombFilterType_t combFilterType;
     
     float                   delayInSecond = 0, gain = 0;
+    float                   fMaxDelayLengthInS = 1;
 
     //showClInfo();
 
@@ -147,7 +148,7 @@ int main(int argc, char* argv[])
     //////////////////////////////////////////////////////////////////////////////
     // instantiate CCombFilterIf
     CCombFilterIf::create(phCombFilter);
-    phCombFilter->init(combFilterType, 3, stFileSpec.fSampleRateInHz, stFileSpec.iNumChannels);
+    phCombFilter->init(combFilterType, fMaxDelayLengthInS, stFileSpec.fSampleRateInHz, stFileSpec.iNumChannels);
     phCombFilter->setParam(CCombFilterIf::kParamGain, gain);
     phCombFilter->setParam(CCombFilterIf::kParamDelay, delayInSecond);
     phCombFilter->printStatus();
@@ -218,6 +219,7 @@ int testFIR()
     CCombFilterIf::CombFilterType_t combFilterType = CCombFilterIf::kCombFIR;   // FIR
     
     int                     iNumChannels = 1;
+    float                   fMaxDelayLengthInS = 1;
     float                   fSampleRateInHz = 44100;
     float                   fInputFreq = 50, fInputInSecond = 3;
     float                   fGain = 1;
@@ -247,7 +249,7 @@ int testFIR()
     
     // instantiate combfilter
     CCombFilterIf::create(phCombFilter);
-    phCombFilter->init(combFilterType, 1, fSampleRateInHz, iNumChannels);
+    phCombFilter->init(combFilterType, fMaxDelayLengthInS, fSampleRateInHz, iNumChannels);
     phCombFilter->setParam(CCombFilterIf::kParamGain, fGain);
     phCombFilter->setParam(CCombFilterIf::kParamDelay, fDelayInSecond);
     //phCombFilter->printStatus();
@@ -306,6 +308,7 @@ int testIIR()
     CCombFilterIf::CombFilterType_t combFilterType = CCombFilterIf::kCombIIR;   // IIR
     
     int                     iNumChannels = 1;
+    float                   fMaxDelayLengthInS = 1;
     float                   fSampleRateInHz = 44100;
     float                   fInputFreq = 50, fInputInSecond = 3;
     float                   fGain = 0.1;
@@ -340,7 +343,7 @@ int testIIR()
 
     // instantiate combfilter
     CCombFilterIf::create(phCombFilter);
-    phCombFilter->init(combFilterType, 1, fSampleRateInHz, iNumChannels);
+    phCombFilter->init(combFilterType, fMaxDelayLengthInS, fSampleRateInHz, iNumChannels);
     phCombFilter->setParam(CCombFilterIf::kParamGain, fGain);
     phCombFilter->setParam(CCombFilterIf::kParamDelay, fDelayInSecond);
     //phCombFilter->printStatus();
@@ -377,7 +380,7 @@ int testIIR()
 
     // instantiate combfilter
     CCombFilterIf::create(phCombFilter);
-    phCombFilter->init(combFilterType, 1, fSampleRateInHz, iNumChannels);
+    phCombFilter->init(combFilterType, fMaxDelayLengthInS, fSampleRateInHz, iNumChannels);
     phCombFilter->setParam(CCombFilterIf::kParamGain, fGain);
     phCombFilter->setParam(CCombFilterIf::kParamDelay, fDelayInSecond);
     //phCombFilter->printStatus();
@@ -432,6 +435,7 @@ int testBlock()
     CCombFilterIf::CombFilterType_t combFilterType = CCombFilterIf::kCombFIR;   // FIR
     
     int                     iNumChannels = 1;
+    
     // params for sinusoid
     float                   fSampleRateInHz = 44100;
     float                   fInputFreq = 50, fInputInSecond = 3;
@@ -502,6 +506,7 @@ void testBlockUnit(float** ppfSinBuffer, float**& ppfAudioDataOutBuffer, int iNu
     
     CCombFilterIf           *phCombFilter = 0;
     
+    float                   fMaxDelayLengthInS = 1;
     float                   fSampleRateInHz = 44100;
     float                   fGain = 1;
     float                   fDelayInSecond = 0.00227;
@@ -519,7 +524,7 @@ void testBlockUnit(float** ppfSinBuffer, float**& ppfAudioDataOutBuffer, int iNu
 
     // instantiate combfilter
     CCombFilterIf::create(phCombFilter);
-    phCombFilter->init(combFilterType, 1, fSampleRateInHz, iNumChannels);
+    phCombFilter->init(combFilterType, fMaxDelayLengthInS, fSampleRateInHz, iNumChannels);
     phCombFilter->setParam(CCombFilterIf::kParamGain, fGain);
     phCombFilter->setParam(CCombFilterIf::kParamDelay, fDelayInSecond);
     //phCombFilter->printStatus();
@@ -559,6 +564,7 @@ int testZeros()
     CCombFilterIf::CombFilterType_t combFilterType = CCombFilterIf::kCombFIR;   // FIR, IIR
     
     int                     iNumChannels = 1;
+    float                   fMaxDelayLengthInS = 1;
     float                   fSampleRateInHz = 44100;
     float                   fDelayInSecond = 0.00227, fGain = 1;         // freq: 441 Hz
     
@@ -576,7 +582,7 @@ int testZeros()
     // test zero input for FIR
     combFilterType = CCombFilterIf::kCombFIR;
     CCombFilterIf::create(phCombFilter);
-    phCombFilter->init(combFilterType, 1, fSampleRateInHz, iNumChannels);
+    phCombFilter->init(combFilterType, fMaxDelayLengthInS, fSampleRateInHz, iNumChannels);
     phCombFilter->setParam(CCombFilterIf::kParamGain, fGain);
     phCombFilter->setParam(CCombFilterIf::kParamDelay, fDelayInSecond);
     //phCombFilter->printStatus();
@@ -595,7 +601,7 @@ int testZeros()
     // test zero input for IIR
     combFilterType = CCombFilterIf::kCombIIR;
     CCombFilterIf::create(phCombFilter);
-    phCombFilter->init(combFilterType, 1, fSampleRateInHz, iNumChannels);
+    phCombFilter->init(combFilterType, fMaxDelayLengthInS, fSampleRateInHz, iNumChannels);
     phCombFilter->setParam(CCombFilterIf::kParamGain, fGain);
     phCombFilter->setParam(CCombFilterIf::kParamDelay, fDelayInSecond);
     //phCombFilter->printStatus();
@@ -634,6 +640,7 @@ int testZeroDelay()
     CCombFilterIf::CombFilterType_t combFilterType = CCombFilterIf::kCombFIR;   // FIR
     
     int                     iNumChannels = 1;
+    float                   fMaxDelayLengthInS = 1;
     float                   fSampleRateInHz = 44100;
     float                   fInputFreq = 50, fInputInSecond = 3;
     float                   fGain = 1;
@@ -660,10 +667,10 @@ int testZeroDelay()
     // generate sinusoid
     ppfSinBuffer = new float*[1];
     genSin(ppfSinBuffer[0], fSampleRateInHz, fInputFreq, fInputInSecond);
-    
+
     // instantiate combfilter
     CCombFilterIf::create(phCombFilter);
-    phCombFilter->init(combFilterType, 1, fSampleRateInHz, iNumChannels);
+    phCombFilter->init(combFilterType, fMaxDelayLengthInS, fSampleRateInHz, iNumChannels);
     phCombFilter->setParam(CCombFilterIf::kParamGain, fGain);
     phCombFilter->setParam(CCombFilterIf::kParamDelay, fDelayInSecond);
     //phCombFilter->printStatus();
@@ -691,6 +698,41 @@ int testZeroDelay()
     }
 
     CCombFilterIf::destroy(phCombFilter);
+
+
+    combFilterType = CCombFilterIf::kCombIIR;   // IIR
+    // instantiate combfilter
+    CCombFilterIf::create(phCombFilter);
+    phCombFilter->init(combFilterType, fMaxDelayLengthInS, fSampleRateInHz, iNumChannels);
+    phCombFilter->setParam(CCombFilterIf::kParamGain, fGain);
+    phCombFilter->setParam(CCombFilterIf::kParamDelay, fDelayInSecond);
+    //phCombFilter->printStatus();
+    
+    for (int i = 0; i < iNumBlocks; i++){
+        // read a block from ppfSinBuffer
+        for (int c = 0; c < iNumChannels; c++)
+            memcpy(ppfAudioData[c], &ppfSinBuffer[c][i * kBlockSize], kBlockSize * sizeof(float));
+        
+        // apply FIR
+        phCombFilter->process(ppfAudioData, ppfAudioDataO, iNumFrames);
+
+        // check zero
+        int st = 0;
+        if (i == 0)
+            st = iDelayInSample;
+        for (int c = 0; c < iNumChannels; c++)
+            for (int j = st; j < kBlockSize; j++) {
+                if (ppfAudioDataO[c][j] != ppfAudioData[c][j]){
+                    cout << "Test5 failed for IIR." << endl;
+                    cout << ppfAudioDataO[c][j] << endl;
+                    return -1;
+                }
+            }
+    }
+
+    CCombFilterIf::destroy(phCombFilter);
+
+
 
     delete [] ppfAudioData[0];
     delete [] ppfAudioData;
