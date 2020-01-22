@@ -15,7 +15,8 @@ using std::endl;
 void    showClInfo ();
 static void show_usage(char *argv);
 
-void genSin(float*& sinBuffer, float fSampleRateInHz, float inputFreq, float inputInSecond, float fAmp);
+void genSin(float*& sinBuffer, int iBufferLen, float fSampleRateInHz, float inputFreq, float inputInSecond, float fAmp);
+void genRandom(float*& pfSinBuffer, int iBufferLen, float fAmp);
 void   testBlockUnit(float** ppfSinBuffer, float**& ppfAudioDataOutBuffer, int iNumChannels, int blockSize, int iNumBlock, CCombFilterIf::CombFilterType_t combFilterType);
 
 // test functions
@@ -51,14 +52,14 @@ int main(int argc, char* argv[])
     CCombFilterIf::CombFilterType_t combFilterType;
     
     // params for filter
-    float                   delayInSecond = 0, gain = 0;
+    float                   fDelayInSecond = 0, fGain = 0;
     float                   fMaxDelayLengthInS = 1;
 
     //showClInfo();
 
     //////////////////////////////////////////////////////////////////////////////
     // parse command line arguments
-    if (argc < 11) {
+    if (argc < 2) {
         show_usage(argv[0]);
         
         cout << endl << "Run tests..." << endl;
@@ -79,11 +80,11 @@ int main(int argc, char* argv[])
         // test 5
         testZeroDelay();
         
-        cout << "Done in: \t" << (clock() - time)*1.F / CLOCKS_PER_SEC << " seconds." << endl;
+        cout << endl << "Done in: \t" << (clock() - time)*1.F / CLOCKS_PER_SEC << " seconds." << endl;
         
         return 0;
     }
-    
+
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (i + 1 == argc){
@@ -106,9 +107,9 @@ int main(int argc, char* argv[])
                 return -1;
             }
         } else if ((arg == "-g") || (arg == "--gain")) {
-            gain = std::stof(argv[++i]);
+            fGain = std::stof(argv[++i]);
         } else if ((arg == "-d") || (arg == "--delay")) {
-            delayInSecond = std::stof(argv[++i]);
+            fDelayInSecond = std::stof(argv[++i]);
         }
         else{
             cout << "Invalid input arguments." << endl;
@@ -153,9 +154,9 @@ int main(int argc, char* argv[])
     // instantiate CCombFilterIf
     CCombFilterIf::create(phCombFilter);
     phCombFilter->init(combFilterType, fMaxDelayLengthInS, stFileSpec.fSampleRateInHz, stFileSpec.iNumChannels);
-    phCombFilter->setParam(CCombFilterIf::kParamGain, gain);
-    phCombFilter->setParam(CCombFilterIf::kParamDelay, delayInSecond);
-    phCombFilter->printStatus();
+    phCombFilter->setParam(CCombFilterIf::kParamGain, fGain);
+    phCombFilter->setParam(CCombFilterIf::kParamDelay, fDelayInSecond);
+    //phCombFilter->printStatus();
     
     //////////////////////////////////////////////////////////////////////////////
     // allocate memory
@@ -189,7 +190,6 @@ int main(int argc, char* argv[])
     ppfAudioData = 0;
 
     return 0;
-
 }
 
 static void show_usage(char *argv)
@@ -227,6 +227,7 @@ int testFIR()
     float                   fSampleRateInHz = 44100;
     float                   fInputFreq = 50, fInputInSecond = 3;
     float                   fAmp = 100;
+    int                     iSinLen = floor(fSampleRateInHz * fInputInSecond);
     
     // params for filter
     float                   fGain = 1;
@@ -248,7 +249,7 @@ int testFIR()
 
     // generate sinusoid
     ppfSinBuffer = new float*[1];
-    genSin(ppfSinBuffer[0], fSampleRateInHz, fInputFreq, fInputInSecond, fAmp);
+    genSin(ppfSinBuffer[0], iSinLen, fSampleRateInHz, fInputFreq, fInputInSecond, fAmp);
     
     // instantiate combfilter
     CCombFilterIf::create(phCombFilter);
@@ -317,6 +318,7 @@ int testIIR()
     float                   fSampleRateInHz = 44100;
     float                   fInputFreq = 50, fInputInSecond = 3;
     float                   fAmp = 100;
+    int                     iSinLen = floor(fSampleRateInHz * fInputInSecond);
     
     // params for filter
     float                   fGain = 0.1;
@@ -338,7 +340,7 @@ int testIIR()
 
     // generate sinusoid
     ppfSinBuffer = new float*[1];
-    genSin(ppfSinBuffer[0], fSampleRateInHz, fInputFreq, fInputInSecond, fAmp);
+    genSin(ppfSinBuffer[0], iSinLen, fSampleRateInHz, fInputFreq, fInputInSecond, fAmp);
     
 
     // check: increasing amplitude: delay = period
@@ -444,16 +446,17 @@ int testBlock()
     float                   fSampleRateInHz = 44100;
     float                   fInputFreq = 50, fInputInSecond = 3;
     float                   fAmp = 100;
+    int                     iSinLen = floor(fSampleRateInHz * fInputInSecond);
 
     int                     iNumBlocks1 = floor(fSampleRateInHz * fInputInSecond / kBlockSize1);
     int                     iNumBlocks2 = floor(fSampleRateInHz * fInputInSecond / kBlockSize2);
     
     cout << "----------Start Test 3----------" << endl;
 
-    // generate sinusoid
+    // generate random signal
     ppfSinBuffer = new float*[1];
-    genSin(ppfSinBuffer[0], fSampleRateInHz, fInputFreq, fInputInSecond, fAmp);
-    int iSinLen = static_cast<int>(fInputInSecond * fSampleRateInHz);
+    //genSin(ppfSinBuffer[0], iSinLen, fSampleRateInHz, fInputFreq, fInputInSecond, fAmp);
+    genRandom(ppfSinBuffer[0], iSinLen, fAmp);
     
     ppfOutBuffer1 = new float*[1];
     ppfOutBuffer1[0] = new float[iSinLen];
@@ -651,6 +654,7 @@ int testZeroDelay()
     float                   fSampleRateInHz = 44100;
     float                   fInputFreq = 50, fInputInSecond = 3;
     float                   fAmp = 100;
+    int                     iSinLen = floor(fSampleRateInHz * fInputInSecond);
     
     // params for filter
     float                   fGain = 1;
@@ -670,9 +674,10 @@ int testZeroDelay()
     for (int i = 0; i < kBlockSize; i++)
         ppfAudioData[0][i] = 0;
 
-    // generate sinusoid
+    // generate random signal
     ppfSinBuffer = new float*[1];
-    genSin(ppfSinBuffer[0], fSampleRateInHz, fInputFreq, fInputInSecond, fAmp);
+    //genSin(ppfSinBuffer[0], iSinLen, fSampleRateInHz, fInputFreq, fInputInSecond, fAmp);
+    genRandom(ppfSinBuffer[0], iSinLen, fAmp);
 
     // instantiate combfilter
     CCombFilterIf::create(phCombFilter);
@@ -738,8 +743,6 @@ int testZeroDelay()
 
     CCombFilterIf::destroy(phCombFilter);
 
-
-
     delete [] ppfAudioData[0];
     delete [] ppfAudioData;
     delete [] ppfAudioDataO[0];
@@ -752,15 +755,25 @@ int testZeroDelay()
     return 0;
 }
 
-void genSin(float*& pfSinBuffer, float fSampleRateInHz, float fInputFreq, float fInputInSecond, float fAmp){
-    int sinLen = static_cast<int>(fInputInSecond * fSampleRateInHz);
+// sinusoid generator
+void genSin(float*& pfSinBuffer, int iBufferLen, float fSampleRateInHz, float fInputFreq, float fInputInSecond, float fAmp)
+{
+    pfSinBuffer = new float[iBufferLen];
 
-    pfSinBuffer = new float[sinLen];
-
-    for (int i = 0; i < sinLen; i++){
+    for (int i = 0; i < iBufferLen; i++){
         pfSinBuffer[i] = fAmp * sin((2.F * PI * fInputFreq / fSampleRateInHz) * i);
     }
 
+    return;
+}
+
+// random signal generator
+void genRandom(float*& pfSinBuffer, int iBufferLen, float fAmp)
+{
+    pfSinBuffer = new float[iBufferLen];
+    
+    for (int i = 0; i < iBufferLen; i++)
+        pfSinBuffer[i] = fAmp * sin(2.F * PI * (rand() % 100) / 100);
     return;
 }
 
