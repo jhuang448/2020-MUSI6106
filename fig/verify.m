@@ -32,7 +32,7 @@ subplot(2,1,2);
 plot(idx, diff_iir);
 xlabel('time');
 ylim([0, 1e-4]);
-title('Difference for FIR');
+title('Difference for IIR');
 
 sgtitle('first 1000 samples in sweep.wav');
 
