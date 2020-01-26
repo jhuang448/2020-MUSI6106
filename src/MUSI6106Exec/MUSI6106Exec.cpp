@@ -107,9 +107,27 @@ int main(int argc, char* argv[])
                 return -1;
             }
         } else if ((arg == "-g") || (arg == "--gain")) {
-            fGain = std::stof(argv[++i]);
+            size_t t(0);
+            try {
+                fGain = std::stof(argv[++i], &t);
+            } catch (const std::exception &e) {
+                cout << "Caught exception (gain) \"" << e.what() << "\"\n";
+                return -1;
+            }
+            if (argv[i][t])
+                cout << "Invalid gain: " << argv[i] << endl;
         } else if ((arg == "-d") || (arg == "--delay")) {
-            fDelayInSecond = std::stof(argv[++i]);
+            size_t t(0);
+            try {
+                fDelayInSecond = std::stof(argv[++i], &t);
+            } catch (const std::exception &e) {
+                cout << "Caught exception (delay length) \"" << e.what() << "\"\n";
+                return -1;
+            }
+            if (argv[i][t] || fDelayInSecond > fMaxDelayLengthInS || fDelayInSecond < 0) {
+                cout << "Invalid delay length: " << argv[i] << "s. Should be between 0s and " << fMaxDelayLengthInS << "s." << endl;
+                return -1;
+            }
         }
         else{
             cout << "Invalid input arguments." << endl;
@@ -444,7 +462,8 @@ int testBlock()
     
     // params for sinusoid
     float                   fSampleRateInHz = 44100;
-    float                   fInputFreq = 50, fInputInSecond = 3;
+    //float                   fInputFreq = 50
+    float                   fInputInSecond = 3;
     float                   fAmp = 100;
     int                     iSinLen = floor(fSampleRateInHz * fInputInSecond);
 
@@ -652,7 +671,8 @@ int testZeroDelay()
     
     // params for sinusoid
     float                   fSampleRateInHz = 44100;
-    float                   fInputFreq = 50, fInputInSecond = 3;
+    //float                   fInputFreq = 50
+    float                   fInputInSecond = 3;
     float                   fAmp = 100;
     int                     iSinLen = floor(fSampleRateInHz * fInputInSecond);
     
