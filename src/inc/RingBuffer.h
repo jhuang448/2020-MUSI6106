@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <cmath>
 
+using namespace std;
+
 /*! \brief implement a circular buffer of type T
 */
 template <class T> 
@@ -18,8 +20,10 @@ public:
 
         // allocate and init
         pRingBuffer = new T[m_iBuffLength];
+        memset(pRingBuffer, 0, m_iBuffLength * sizeof(T));
         iReadIdx = 0;
         iWriteIdx = 0;
+        isFull = false;
     }
 
     virtual ~CRingBuffer ()
@@ -34,8 +38,14 @@ public:
     */
     void putPostInc (T tNewValue)
     {
+        if (m_iBuffLength - getNumValuesInBuffer() == 0){
+            cout << "Not enough space in the buffer!" << endl;
+            return;
+        }
         put(tNewValue);
-        iWriteIdx++;
+        iWriteIdx = (iWriteIdx + 1) % m_iBuffLength;
+        if (iWriteIdx == iReadIdx) // write pointer reaches the read pointer
+            isFull = true; // the buffer is full
     }
 
     /*! add new values of type T to write index and increment write index
@@ -45,8 +55,8 @@ public:
     */
     void putPostInc (const T* ptNewBuff, int iLength)
     {
-        put(ptNewBuff, iLength);
-        iWriteIdx = (iWriteIdx + iLength) % m_iBuffLength;
+        for (int i = 0; i < iLength; i++)
+            putPostInc(ptNewBuff[i]);
     }
 
     /*! add a new value of type T to write index
@@ -67,8 +77,7 @@ public:
     {
         int iWriteIdxCur = iWriteIdx;
         for (int i = 0; i < iLength; i++){
-            pRingBuffer[iWriteIdxCur++] = ptNewBuff[i];
-            iWriteIdxCur = (iWriteIdxCur + 1) % m_iBuffLength;
+            put(pRingBuffer + (iWriteIdxCur++ % m_iBuffLength), ptNewBuff[i]);
         }
     }
     
@@ -77,7 +86,15 @@ public:
     */
     T getPostInc ()
     {
-        return get(0.0);
+        if (getNumValuesInBuffer() == 0){
+            cout << "Not enough values in the buffer!" << endl;
+            return -1;
+        }
+        if (iReadIdx == iWriteIdx) // current a full buffer
+            isFull = false;     // read point increment; releasing one slot
+        int v = get(iReadIdx);
+        iReadIdx = (iReadIdx + 1) % m_iBuffLength;
+        return v;
     }
 
     /*! return the values starting at the current read index and increment the read pointer
@@ -87,8 +104,9 @@ public:
     */
     void getPostInc (T* ptBuff, int iLength)
     {
-        get(ptBuff, iLength);
-        iReadIdx = (iReadIdx + iLength) % m_iBuffLength;
+        for (int i = 0; i < iLength; i++){
+            ptBuff[i] = getPostInc();
+        }
     }
 
     /*! return the value at the current read index
@@ -97,6 +115,10 @@ public:
     */
     T get (float fOffset = 0.f) const
     {
+        if (getNumValuesInBuffer() <= static_cast<int>(fOffset)){
+            cout << "Not enough values in the buffer!" << endl;
+            return -1;
+        }
         int iReadPosi = iReadIdx + static_cast<int>(fOffset);
         return pRingBuffer[iReadPosi];
     }
@@ -110,8 +132,7 @@ public:
     {
         int iReadIdxCur = iReadIdx;
         for (int i = 0; i < iLength; i++){
-            ptBuff[iReadIdxCur++] = pRingBuffer[i];
-            iReadIdxCur = (iReadIdxCur + 1) % m_iBuffLength;
+            ptBuff[i] = get(pRingBuffer + (iReadIdxCur++ % m_iBuffLength));
         }
     }
     
@@ -172,7 +193,10 @@ public:
     */
     int getNumValuesInBuffer () const
     {
-        return (iReadIdx - iWriteIdx) % m_iBuffLength;
+        if (isFull)
+            return m_iBuffLength;
+        else
+            return (iWriteIdx - iReadIdx + m_iBuffLength) % m_iBuffLength;
     }
 
     /*! returns the length of the internal buffer
@@ -182,6 +206,30 @@ public:
     {
         return m_iBuffLength;
     }
+
+    void printBufferStatus()
+    {
+        cout << "Buffer Length: " << m_iBuffLength << endl;
+        cout << "isFull: " << isFull << " valid values: " << getNumValuesInBuffer() << endl;
+        for (int i = 0; i < m_iBuffLength; i++){
+            cout << pRingBuffer[i] << " ";
+        }
+        cout << endl;
+        for (int i = 0; i <= iReadIdx; i++){
+            if (i == iReadIdx)
+                cout << "r ";
+            else
+                cout << "  ";
+        }
+        cout << endl;
+        for (int i = 0; i <= iWriteIdx; i++){
+            if (i == iWriteIdx)
+                cout << "w ";
+            else
+                cout << "  ";
+        }
+        cout << endl;
+    }
 private:
     CRingBuffer ();
     CRingBuffer(const CRingBuffer& that);
@@ -190,5 +238,6 @@ private:
     T* pRingBuffer;
     int iReadIdx;
     int iWriteIdx;
+    bool isFull;
 };
 #endif // __RingBuffer_hdr__
