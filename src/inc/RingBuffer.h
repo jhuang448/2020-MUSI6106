@@ -54,7 +54,7 @@ public:
     \param tNewValue the new value
     \return void
     */
-    void put(T tNewValue)
+    void put(T tNewValue)   // warning: pointers not moved
     {
         m_ptBuff[m_iWriteIdx]   = tNewValue;
     }
@@ -64,7 +64,7 @@ public:
     \param iLength: number of values
     \return void
     */
-    void put(const T* ptNewBuff, int iLength)
+    void put(const T* ptNewBuff, int iLength) // warning: allow overwrite
     {
         assert(iLength <= m_iBuffLength && iLength >= 0);
 
@@ -101,7 +101,7 @@ public:
     \param fOffset: read at offset from read index
     \return float the value from the read index
     */
-    T get (float fOffset = 0) const
+    T get (float fOffset = 0) const // warning: pointers not moved
     {
         if (fOffset == 0)
             return m_ptBuff[m_iReadIdx];
