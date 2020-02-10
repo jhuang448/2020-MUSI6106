@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <cmath>
 
+#include <iostream>
+using namespace std;
+
 /*! \brief implement a circular buffer of type T
 */
 template <class T> 
@@ -198,6 +201,32 @@ public:
     {
         return m_iBuffLength;
     }
+
+    void printStatus()
+    {
+        cout << "**************** Print RingBuffer Status ****************" << endl;
+        cout << "Buffer Length: " << m_iBuffLength << endl;
+        cout << " valid values: " << getNumValuesInBuffer() << endl;
+        for (int i = 0; i < m_iBuffLength; i++){
+            cout << m_ptBuff[i] << " ";
+        }
+        cout << endl;
+        for (int i = 0; i <= m_iReadIdx; i++){
+            if (i == m_iReadIdx)
+                cout << "r ";
+            else
+                cout << "  ";
+        }
+        cout << endl;
+        for (int i = 0; i <= m_iWriteIdx; i++){
+            if (i == m_iWriteIdx)
+                cout << "w ";
+            else
+                cout << "  ";
+        }
+        cout << endl;
+    }
+
 private:
     CRingBuffer ();
     CRingBuffer(const CRingBuffer& that);

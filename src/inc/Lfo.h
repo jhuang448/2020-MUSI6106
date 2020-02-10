@@ -9,7 +9,7 @@ const double PI  =3.141592653589793238463;
 
 /*!	\brief Class for LFO
 */
-class CLfo: private CRingBuffer<float> // inheritance is fine because the Lfo only need one buffer
+class CLfo: public CRingBuffer<float> // inheritance is fine because the Lfo only need one buffer
 {
 public:
 	/*! list of parameters for the LFO */
@@ -50,6 +50,13 @@ public:
    		m_fModFreq = 0;
    	}
 
+   	void printStatus()
+   	{
+   		printf("**************** Print LFO Status ****************\n");
+   		printf("m_iBuffLength: %d m_fWidth: %f m_fModFreq: %f\n", m_iBuffLength, m_fWidth, m_fModFreq);
+   		CRingBuffer<float>::printStatus();
+   	}
+
 private:
 	// disable default constructor and copy constructor
 	CLfo ();
@@ -60,15 +67,13 @@ private:
 	void writeSinusoidal()
 	{
 		for (int i = 0; i < m_iBuffLength; i++) {
-			CRingBuffer::putPostInt(m_fWidth * sin(i * 2 * PI * m_fModeFreq));
+			CRingBuffer::putPostInc(m_fWidth * sin(i * 2 * PI * m_fModFreq));
 		}
 	}
 
 	int 			m_iBuffLength;
 	float 			m_fWidth;
 	float			m_fModFreq;
-}
-
-
+};
 
 #endif // #if !defined(__Lfo_hdr__)

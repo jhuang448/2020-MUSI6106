@@ -3,30 +3,9 @@
 #include "RingBuffer.h"
 #include "Lfo.h"
 
+#include "Vibrato.h"
+
 static const char*  kCMyProjectBuildDate             = __DATE__;
-
-const int  CVibrato::getVersion (const Version_t eVersionIdx)
-{
-	int iVersion = 0;
-
-    switch (eVersionIdx)
-    {
-    case kMajor:
-        iVersion    = MUSI6106_VERSION_MAJOR; 
-        break;
-    case kMinor:
-        iVersion    = MUSI6106_VERSION_MINOR; 
-        break;
-    case kPatch:
-        iVersion    = MUSI6106_VERSION_PATCH; 
-        break;
-    case kNumVersionInts:
-        iVersion    = -1;
-        break;
-    }
-
-    return iVersion;
-}
 
 const char* CVibrato::getBuildDate ()
 {
@@ -35,7 +14,7 @@ const char* CVibrato::getBuildDate ()
 
 Error_t CVibrato::create (CVibrato*& pCVibrato)
 {
-	pCVibrato = new pCVibrato();
+	pCVibrato = new CVibrato();
 
 	if (!pCVibrato)
 		return kUnknownError;
@@ -78,12 +57,16 @@ Error_t CVibrato::init (float fMaxDelayLengthInS, float fSampleRateInHz, int iNu
     m_fWidthInS = fWidthInS;
     m_fModFreq = fModFreqInHz;
 
+    m_ppCRingBuffer = new CRingBuffer<float>*[m_iNumChannels];
+
     // initialize ring buffers
     int iDelayInSamples = CUtil::float2int<int>(fMaxDelayLengthInS * fSampleRateInHz);
     int iWidthInSamples = CUtil::float2int<int>(fWidthInS * fSampleRateInHz);
     int iBufferLength = 2 + iDelayInSamples + 2 * iWidthInSamples; // why multiply by 2?
-    for (int i = 0; i < m_iNumChannels; i++)
-    	m_pCRingBuffer[i] = new CRingBuffer(iBufferLength);
+    for (int i = 0; i < m_iNumChannels; i++) {
+    	m_ppCRingBuffer[i] = new CRingBuffer<float>(iBufferLength);
+    	m_ppCRingBuffer[i]->setWriteIdx(1 + iDelayInSamples);
+    }
 
     // initialize LFO
     int iLfoBufferLengthInSamples = CUtil::float2int<int>(fSampleRateInHz / fModFreqInHz);
@@ -99,8 +82,10 @@ Error_t CVibrato::init (float fMaxDelayLengthInS, float fSampleRateInHz, int iNu
 Error_t CVibrato::reset ()
 {
 	// delete ring buffers
-	delete [] m_pCRingBuffer;
-	m_pCRingBuffer = 0;
+	for (int i = 0; i < m_iNumChannels; i++)
+    	delete m_ppCRingBuffer[i];
+	delete [] m_ppCRingBuffer;
+	m_ppCRingBuffer = 0;
 
 	// delete LFO
 	delete m_pCLfo;
@@ -128,6 +113,8 @@ Error_t CVibrato::setParam (VibratoParam_t eParam, float fParamValue)
 			return init(m_fDelayLengthInS, m_fSampleRate, m_iNumChannels, fParamValue, m_fModFreq);
 		case kParamModFreq:
 			return init(m_fDelayLengthInS, m_fSampleRate, m_iNumChannels, m_fWidthInS, fParamValue);
+        default:
+        	return kUnknownError;
 	}
 }
 
@@ -144,19 +131,42 @@ float   CVibrato::getParam (VibratoParam_t eParam) const
 			return m_fWidthInS;
 		case kParamModFreq:
 			return m_fModFreq;
+		default:
+			return kUnknownError;
 	}
 }
 
 Error_t CVibrato::process (float **ppfInputBuffer, float **ppfOutputBuffer, int iNumberOfFrames)
 {
-	//
+	float fOffsetTmp = 0;
+	for(int c = 0; c < m_iNumChannels; c++)
+    {
+        for (int i = 0; i < iNumberOfFrames; i++)
+        {
+        	// update delay line
+            m_ppCRingBuffer[c]->putPostInc(ppfInputBuffer[c][i]);
+            m_ppCRingBuffer[c]->setReadIdx(1);
+            // get offset
+            fOffsetTmp = m_pCLfo->getPostInc();
+            ppfOutputBuffer[c][i] = m_ppCRingBuffer[c]->get(-fOffsetTmp);
+        }
+    }
 	return kNoError;
 }
 
+void CVibrato::printStatus()
+{
+	printf("**************** Print Vibrato Status ****************\n");
+	printf("m_bIsInitialized: %d m_fSampleRate: %f m_iNumChannels: %d\n", m_bIsInitialized, m_fSampleRate, m_iNumChannels);
+	printf("m_fDelayLengthInS: %f m_fWidthInS: %f m_fModFreq: %f\n", m_fDelayLengthInS, m_fWidthInS, m_fModFreq);
+	if (m_bIsInitialized) {
+		// print the buffer of the first channel
+		m_ppCRingBuffer[0]->printStatus();
+		// print the LFO
+		m_pCLfo->printStatus();
+	}
 
-
-
-
+}
 
 
 

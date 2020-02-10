@@ -7,19 +7,9 @@
 
 /*!	\brief Class for the delay-based vibrato effect
 */
-class CVibrato:
+class CVibrato
 {
 public:
-	/*! version number */
-    enum Version_t
-    {
-        kMajor,                         //!< major version number
-        kMinor,                         //!< minor version number
-        kPatch,                         //!< patch version number
-
-        kNumVersionInts
-    };
-
 	/*! list of parameters for the vibrato */
     enum VibratoParam_t
     {
@@ -29,12 +19,6 @@ public:
 
         kNumVibratoParams
     };
-
-	/*! returns the current project version
-    \param eVersionIdx specifies what version to return (kMajor, kMinor,...)
-    \return const int
-    */
-    static const int  getVersion (const Version_t eVersionIdx);
 
     /*! returns the date of the build
     \return const char*
@@ -89,10 +73,12 @@ public:
     */
     Error_t process (float **ppfInputBuffer, float **ppfOutputBuffer, int iNumberOfFrames);
 
+    void printStatus();
+
 private:
 	bool					m_bIsInitialized;	//!< internal bool to check whether the init function has been called
 	
-	CRingBuffer<float>		*m_pCRingBuffer;	//!< handle of the ring buffers
+	CRingBuffer<float>		**m_ppCRingBuffer;	//!< handle of the ring buffers
 	CLfo					*m_pCLfo;			//!< handle of the LFO
 
 	float					m_fDelayLengthInS;	//!< delay length in seconds
@@ -101,10 +87,6 @@ private:
 
 	int 					m_iNumChannels;		//!< number of channels
 	float					m_fSampleRate;		//!< audio sample rate in Hz
-}
-
-
-
-
+};
 
 #endif // # if !defined(__Vibrato_hdr__)
