@@ -6,6 +6,8 @@
 #include <cmath>
 
 #include <iostream>
+#include <iomanip>
+#include <stdio.h>
 using namespace std;
 
 /*! \brief implement a circular buffer of type T
@@ -208,21 +210,22 @@ public:
         cout << "Buffer Length: " << m_iBuffLength << endl;
         cout << " valid values: " << getNumValuesInBuffer() << endl;
         for (int i = 0; i < m_iBuffLength; i++){
-            cout << m_ptBuff[i] << " ";
+            printf("%.5f  ", m_ptBuff[i]);
         }
         cout << endl;
+        cout << m_iReadIdx << ' ' << m_iWriteIdx << endl;
         for (int i = 0; i <= m_iReadIdx; i++){
             if (i == m_iReadIdx)
-                cout << "r ";
+                cout << "      r";
             else
-                cout << "  ";
+                cout << "       ";
         }
         cout << endl;
         for (int i = 0; i <= m_iWriteIdx; i++){
             if (i == m_iWriteIdx)
-                cout << "w ";
+                cout << "      w";
             else
-                cout << "  ";
+                cout << "       ";
         }
         cout << endl;
     }
@@ -231,7 +234,7 @@ private:
     CRingBuffer ();
     CRingBuffer(const CRingBuffer& that);
 
-    void incIdx (int &iIdx, int iOffset = 1)
+    void incIdx (int & iIdx, int iOffset = 1)
     {
         while ((iIdx + iOffset) < 0)
         {

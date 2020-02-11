@@ -41,11 +41,17 @@ public:
     \param fMaxDelayLengthInS maximum allowed delay in seconds
     \param fSampleRateInHz sample rate in Hz
     \param iNumChannels number of audio channels
-    \param fWidthInS modulation width in seconds
-    \param fModFreqInHz modulation frequency in Hz
     \return Error_t
     */
-    Error_t init (float fMaxDelayLengthInS, float fSampleRateInHz, int iNumChannels, float fWidthInS, float fModFreqInHz);
+    Error_t init (float fMaxDelayLengthInS, float fSampleRateInHz, int iNumChannels);
+    
+    /*! initializes the ring buffers
+    */
+    Error_t initRingBuffer ();
+
+    /*! initializes the LFO
+    */
+    Error_t initLFO ();
     
     /*! resets the internal variables (requires new call of init)
     \return Error_t
@@ -73,20 +79,25 @@ public:
     */
     Error_t process (float **ppfInputBuffer, float **ppfOutputBuffer, int iNumberOfFrames);
 
+    /*! prints current status
+    */
     void printStatus();
 
 private:
-	bool					m_bIsInitialized;	//!< internal bool to check whether the init function has been called
-	
-	CRingBuffer<float>		**m_ppCRingBuffer;	//!< handle of the ring buffers
-	CLfo					*m_pCLfo;			//!< handle of the LFO
 
-	float					m_fDelayLengthInS;	//!< delay length in seconds
-	float					m_fWidthInS;		//!< modulation width in seconds
-	float					m_fModFreq;			//!< modulation frequency in Hz
+	bool					m_bIsInitialized;	    //!< internal bool to check whether both ring buffers and LFO are initialized
 
-	int 					m_iNumChannels;		//!< number of channels
-	float					m_fSampleRate;		//!< audio sample rate in Hz
+	CRingBuffer<float>		**m_ppCRingBuffer;	    //!< handle of the ring buffers
+	CLfo					*m_pCLfo;			    //!< handle of the LFO
+    int                     *m_pCLfoReadIdx;        //!< handle of the LFO read idx for each channel
+
+    float                   m_fMaxDelayLengthInS;   //!< delay length in seconds
+	float					m_fDelayLengthInS;	    //!< max delay length in seconds
+	float					m_fWidthInS;		    //!< modulation width in seconds
+	float					m_fModFreq;			    //!< modulation frequency in Hz
+
+	int 					m_iNumChannels;		    //!< number of channels
+	float					m_fSampleRate;		    //!< audio sample rate in Hz
 };
 
 #endif // # if !defined(__Vibrato_hdr__)

@@ -15,14 +15,15 @@ public:
 	/*! list of parameters for the LFO */
     enum LfoParam_t
     {
-        kWidth,							//!< LFO amplitude in sample
+        kWidth,							//!< LFO amplitude in samples
         kModFreq,						//!< LFO modulation frequency in # samples (FreqInHz/SRInHz)
 
         kNumLfoParams
     };
 
     // explicit constructor
-    // initialize the ringbuffer and fill the buffer with sinusoidal
+    /*! initializes the ringbuffer and fill the buffer with sinusoidal
+    */
 	explicit CLfo (int iBufferLengthInSamples, float fWidth, float fModeFreq): 
 		CRingBuffer<float>(iBufferLengthInSamples),
 		m_iBuffLength(iBufferLengthInSamples),
@@ -39,7 +40,7 @@ public:
 	{
 	}
 
-	/*! call buffer reset, set parameters to 0
+	/*! calls buffer reset, set parameters to 0
     \return void
     */
     void reset ()
@@ -50,6 +51,8 @@ public:
    		m_fModFreq = 0;
    	}
 
+   	/*! print LFO buffer status
+   	*/
    	void printStatus()
    	{
    		printf("**************** Print LFO Status ****************\n");
@@ -66,14 +69,14 @@ private:
 	*/
 	void writeSinusoidal()
 	{
-		for (int i = 0; i < m_iBuffLength; i++) {
+		for (int i = 1; i <= m_iBuffLength; i++) {
 			CRingBuffer::putPostInc(m_fWidth * sin(i * 2 * PI * m_fModFreq));
 		}
 	}
 
-	int 			m_iBuffLength;
-	float 			m_fWidth;
-	float			m_fModFreq;
+	int 			m_iBuffLength;				//!< buffer length of LFO
+	float 			m_fWidth;					//!< modulation width in samples
+	float			m_fModFreq;					//!< modulation frequency in # samples
 };
 
 #endif // #if !defined(__Lfo_hdr__)
