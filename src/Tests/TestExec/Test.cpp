@@ -7,6 +7,7 @@
 
 // include project headers
 #include "AudioFileIf.h"
+#include "Vibrato.h"
 
 #define WITH_FLOATEXCEPTIONS
 #define WITH_MEMORYCHECK
@@ -51,12 +52,12 @@ int main(int argc, char* argv[])
 #endif // #ifndef WITHOUT_EXCEPTIONS
 
 
-    // argument 2 contains the working dir
-    if (argc > 2)
-        cTestDataDir.assign(argv[2]);
+    // argument 1 contains the working dir
+    if (argc > 1)
+        cTestDataDir.assign(argv[1]);
     
     // see http://stackoverflow.com/questions/3546054/how-do-i-run-a-single-test-with-unittest
-    if( argc > 1 )
+    if( argc > 2 )
     {
         //walk list of all tests, add those with a name that
         //matches one of the arguments  to a new TestList
@@ -65,7 +66,7 @@ int main(int argc, char* argv[])
         UnitTest::Test* p = allTests.GetHead();
         while( p )
         {
-            if( strcmp( p->m_details.suiteName, argv[ 1 ] ) == 0 )
+            if( strcmp( p->m_details.suiteName, argv[ 2 ] ) == 0 )
             {
                 selectedTests.Add( p );
             }
