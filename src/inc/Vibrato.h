@@ -5,6 +5,36 @@
 #include "RingBuffer.h"
 #include "Lfo.h"
 
+/*
+    Following the CCombFilterIf class's design
+
+    m_ppCRingBuffer:
+        CVibrato class accesses its own ring buffers (one for each channel) via pointers.
+ 
+    m_pCLfo:
+        CLFO is a separate class derived from CRingBuffer. CVibrato class has a member pointer pointing to an LFO.
+ 
+    m_pCLfoReadIdx:
+        Since different channels share the same LFO, they need to save the read idx for each channel.
+
+    CVibrato class has three init functions:
+    init:              set parameters according to the input audio (number of channels, sampling rate)
+    initRingBuffer:    init the internel ringbuffers according to [delayLength, modWidth]
+    initLFO:           init the LFO according to [delayLength, modWidth, modFreq]
+    The last two cannot be done within the first one because they need vibrato parameters.
+    To set these parameters one needs to call setParam
+
+    To use a CVibrato:
+    (0. read audio)
+    1. create
+    2. init
+    3. set parameters x 3(delay length, modulation amplitude and frequency)
+    4. initRingBuffer
+    5. initLFO
+    6. process block by block
+    7. destroy
+ */
+
 /*!	\brief Class for the delay-based vibrato effect
 */
 class CVibrato
