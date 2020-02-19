@@ -39,3 +39,12 @@ src/.DS_Store
 /bld/.vs/MUSI6106/v16/*.suo
 bld
 /lib/debug/*.exp
+/*.bak
+/src/MUSI6106Exec/*.bak
+/src/Tests/TestExec/*.bak
+/src/Tests/Tests/*.bak
+/src/CombFilter/*.bak
+/src/inc/*.bak
+/bin
+/doc
+/lib
