@@ -233,15 +233,8 @@ SUITE(Vibrato)
 
 	TEST_FIXTURE(VibratoData, ZeroInput)
 	{
-		m_pCVibrato->init(m_fMaxDelayInS, m_fSampleRateInHz, m_iNumChannels);
-	    // set parameters
-	    m_pCVibrato->setParam(CVibrato::kParamDelay, m_fDelayInS);
-	    m_pCVibrato->setParam(CVibrato::kParamWidth, m_fWidthInS);
-	    m_pCVibrato->setParam(CVibrato::kParamModFreq, m_fModFreqInHz);
-	    // initialize buffers
-	    m_pCVibrato->initRingBuffer();
-	    m_pCVibrato->initLFO();
-
+		m_pCVibrato->init(m_fMaxDelayInS, m_fSampleRateInHz, m_iNumChannels, m_fDelayInS, m_fWidthInS, m_fModFreqInHz);
+        
 	    TestProcess();
 
         for (int c = 0; c < m_iNumChannels; c++)
@@ -255,14 +248,7 @@ SUITE(Vibrato)
         for (int c = 0; c < m_iNumChannels; c++)
             CSynthesis::generateNoise (m_ppfInputData[c], m_iDataLength, static_cast<float>(rand())/RAND_MAX*17000.F);
         
-        m_pCVibrato->init(m_fMaxDelayInS, m_fSampleRateInHz, m_iNumChannels);
-        // set parameters
-        m_pCVibrato->setParam(CVibrato::kParamDelay, m_fDelayInS);
-        m_pCVibrato->setParam(CVibrato::kParamWidth, 0);    // zero mod amp
-        m_pCVibrato->setParam(CVibrato::kParamModFreq, m_fModFreqInHz);
-        // initialize buffers
-        m_pCVibrato->initRingBuffer();
-        m_pCVibrato->initLFO();
+        m_pCVibrato->init(m_fMaxDelayInS, m_fSampleRateInHz, m_iNumChannels, m_fDelayInS, 0, m_fModFreqInHz);
         
         TestProcess();
         
@@ -277,14 +263,7 @@ SUITE(Vibrato)
         for (int c = 0; c < m_iNumChannels; c++)
             CSynthesis::generateDc (m_ppfInputData[c], m_iDataLength, static_cast<float>(rand())/RAND_MAX*17000.F);
         
-        m_pCVibrato->init(m_fMaxDelayInS, m_fSampleRateInHz, m_iNumChannels);
-        // set parameters
-        m_pCVibrato->setParam(CVibrato::kParamDelay, m_fDelayInS);
-        m_pCVibrato->setParam(CVibrato::kParamWidth, m_fWidthInS);
-        m_pCVibrato->setParam(CVibrato::kParamModFreq, m_fModFreqInHz);
-        // initialize buffers
-        m_pCVibrato->initRingBuffer();
-        m_pCVibrato->initLFO();
+        m_pCVibrato->init(m_fMaxDelayInS, m_fSampleRateInHz, m_iNumChannels, m_fDelayInS, m_fWidthInS, m_fModFreqInHz);
         
         TestProcess();
         
@@ -299,26 +278,13 @@ SUITE(Vibrato)
 		for (int c = 0; c < m_iNumChannels; c++)
             CSynthesis::generateSine (m_ppfInputData[c], 387.F, m_fSampleRateInHz, m_iDataLength, .8F, static_cast<float>(c*M_PI_2));
 
-        m_pCVibrato->init(m_fMaxDelayInS, m_fSampleRateInHz, m_iNumChannels);
-	    // set parameters
-	    m_pCVibrato->setParam(CVibrato::kParamDelay, m_fDelayInS);
-	    m_pCVibrato->setParam(CVibrato::kParamWidth, m_fWidthInS);
-	    m_pCVibrato->setParam(CVibrato::kParamModFreq, m_fModFreqInHz);
-	    // initialize buffers
-	    m_pCVibrato->initRingBuffer();
-	    m_pCVibrato->initLFO();
+        m_pCVibrato->init(m_fMaxDelayInS, m_fSampleRateInHz, m_iNumChannels, m_fDelayInS, m_fWidthInS, m_fModFreqInHz);
 
 	    TestProcess();
 
 	    m_pCVibrato->reset();
-	    m_pCVibrato->init(m_fMaxDelayInS, m_fSampleRateInHz, m_iNumChannels);
-	    // set parameters
-	    m_pCVibrato->setParam(CVibrato::kParamDelay, m_fDelayInS);
-	    m_pCVibrato->setParam(CVibrato::kParamWidth, m_fWidthInS);
-	    m_pCVibrato->setParam(CVibrato::kParamModFreq, m_fModFreqInHz);
-	    // initialize buffers
-	    m_pCVibrato->initRingBuffer();
-	    m_pCVibrato->initLFO();
+	    m_pCVibrato->init(m_fMaxDelayInS, m_fSampleRateInHz, m_iNumChannels, m_fDelayInS, m_fWidthInS, m_fModFreqInHz);
+        
 	    {
             int iNumFramesRemaining = m_iDataLength;
             while (iNumFramesRemaining > 0)
@@ -345,14 +311,7 @@ SUITE(Vibrato)
         for (int c = 0; c < m_iNumChannels; c++)
             CSynthesis::generateNoise (m_ppfInputData[c], m_iDataLength, static_cast<float>(rand())/RAND_MAX*17000.F);
         
-        m_pCVibrato->init(m_fMaxDelayInS, m_fSampleRateInHz, m_iNumChannels);
-        // set parameters
-        m_pCVibrato->setParam(CVibrato::kParamDelay, m_fDelayInS);
-        m_pCVibrato->setParam(CVibrato::kParamWidth, m_fWidthInS);
-        m_pCVibrato->setParam(CVibrato::kParamModFreq, 0);      // zero mod freq
-        // initialize buffers
-        m_pCVibrato->initRingBuffer();
-        m_pCVibrato->initLFO();
+        m_pCVibrato->init(m_fMaxDelayInS, m_fSampleRateInHz, m_iNumChannels, m_fDelayInS, m_fWidthInS, 0);
         
         TestProcess();
         

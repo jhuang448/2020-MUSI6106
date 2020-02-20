@@ -35,6 +35,30 @@ Error_t CVibrato::destroy (CVibrato*& pCVibrato)
 	return kNoError;
 }
 
+Error_t CVibrato::init (float fMaxDelayLengthInS, float fSampleRateInHz, int iNumChannels, float fDelayLengthInS, float fWidthInS, float fModFreqInHz)
+{
+    Error_t e = kNoError;
+    e = init(fMaxDelayLengthInS, fSampleRateInHz, iNumChannels);
+    if (e != kNoError)
+        return e;
+    e = setParam(kParamDelay, fDelayLengthInS);
+    if (e != kNoError)
+        return e;
+    e = setParam(kParamWidth, fWidthInS);
+    if (e != kNoError)
+        return e;
+    e = setParam(kParamModFreq, fModFreqInHz);
+    if (e != kNoError)
+        return e;
+    e = initRingBuffer();
+    if (e != kNoError)
+        return e;
+    e = initLFO();
+    if (e != kNoError)
+        return e;
+    return e;
+}
+
 Error_t CVibrato::init (float fMaxDelayLengthInS, float fSampleRateInHz, int iNumChannels)
 {
 	reset();

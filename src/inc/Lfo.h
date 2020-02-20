@@ -5,11 +5,9 @@
 #include <cmath>
 #include "RingBuffer.h"
 
-const double PI  =3.141592653589793238463;
-
 /*!	\brief Class for LFO
 */
-class CLfo: public CRingBuffer<float> // inheritance is fine because the Lfo only need one buffer
+class CLfo: public CRingBuffer<float>
 {
 public:
 	/*! list of parameters for the LFO */
@@ -70,7 +68,7 @@ private:
 	void writeSinusoidal()
 	{
 		for (int i = 1; i <= m_iBuffLength; i++) {
-			CRingBuffer::putPostInc(m_fWidth * sin(i * 2 * PI * m_fModFreq));
+			CRingBuffer::putPostInc(m_fWidth * sin(i * 2 * M_PI * m_fModFreq));
 		}
 	}
 

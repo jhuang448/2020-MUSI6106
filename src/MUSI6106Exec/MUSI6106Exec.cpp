@@ -45,6 +45,7 @@ int main(int argc, char* argv[])
 
     //////////////////////////////////////////////////////////////////////////////
     // parse command line arguments
+    showClInfo();
     if (argc < 5) {
         show_usage(argv[0]);
         return -1;
@@ -118,14 +119,7 @@ int main(int argc, char* argv[])
     //////////////////////////////////////////////////////////////////////////////
     // initialize vibrato
     CVibrato::create(pCVibrato);
-    pCVibrato->init(fMaxDelayInS, fSampleRateInHz, iNumChannels);
-    // set parameters
-    pCVibrato->setParam(CVibrato::kParamDelay, fDelayInS);
-    pCVibrato->setParam(CVibrato::kParamWidth, fWidthInS);
-    pCVibrato->setParam(CVibrato::kParamModFreq, fModFreqInHz);
-    // initialize buffers
-    pCVibrato->initRingBuffer();
-    pCVibrato->initLFO();
+    pCVibrato->init(fMaxDelayInS, fSampleRateInHz, iNumChannels, fDelayInS, fWidthInS, fModFreqInHz);
 
     //pCVibrato->printStatus();
 

@@ -75,6 +75,17 @@ public:
     */
     Error_t init (float fMaxDelayLengthInS, float fSampleRateInHz, int iNumChannels);
     
+    /*! initializes a vibrato instance, with all parameters ready
+    \param fMaxDelayLengthInS maximum allowed delay in seconds
+    \param fSampleRateInHz sample rate in Hz
+    \param iNumChannels number of audio channels
+    \param fDelayLengthInS delay in seconds
+    \param fWidthInS modulation width in seconds
+    \param fModFreq modulation frequency in Hz
+    \return Error_t
+    */
+    Error_t init (float fMaxDelayLengthInS, float fSampleRateInHz, int iNumChannels, float fDelayLengthInS, float fWidthInS, float fModFreqInHz);
+    
     /*! initializes the ring buffers
     */
     Error_t initRingBuffer ();
