@@ -23,6 +23,7 @@
     initLFO:           init the LFO according to [delayLength, modWidth, modFreq]
     The last two cannot be done within the first one because they need vibrato parameters.
     To set these parameters one needs to call setParam
+    (update: the fourth init function doing the init, setParams, initRingBuffer and initLFO)
 
     To use a CVibrato:
     (0. read audio)
@@ -33,6 +34,7 @@
     5. initLFO
     6. process block by block
     7. destroy
+    (update: another init function wraps up step 2 ~ 5)
  */
 
 /*!	\brief Class for the delay-based vibrato effect

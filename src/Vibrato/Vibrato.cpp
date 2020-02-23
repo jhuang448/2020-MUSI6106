@@ -92,6 +92,7 @@ Error_t CVibrato::initRingBuffer ()
     int iDelayInSamples = CUtil::float2int<int>(m_fDelayLengthInS * m_fSampleRate);
     int iWidthInSamples = CUtil::float2int<int>(m_fWidthInS * m_fSampleRate);
     int iBufferLength = 2 + iDelayInSamples + 2 * iWidthInSamples;
+    
     for (int i = 0; i < m_iNumChannels; i++) {
 
     	if (m_ppCRingBuffer[i])
@@ -138,7 +139,7 @@ Error_t CVibrato::reset ()
 	delete m_pCLfo;
 	m_pCLfo = 0;
 
-	delete m_pCLfoReadIdx;
+	delete [] m_pCLfoReadIdx;
 	m_pCLfoReadIdx = 0;
 
 	m_iNumChannels = 0;
@@ -157,7 +158,7 @@ Error_t CVibrato::setParam (VibratoParam_t eParam, float fParamValue)
 	if (!m_bIsInitialized)
 		return kNotInitializedError;
 
-	switch (eParam) // reinitialize
+	switch (eParam) // no reinitialize
 	{
         case kParamDelay:
         {
@@ -208,7 +209,7 @@ float   CVibrato::getParam (VibratoParam_t eParam) const
 Error_t CVibrato::process (float **ppfInputBuffer, float **ppfOutputBuffer, int iNumberOfFrames)
 {
 	float fOffsetTmp = 0;
-	for(int c = 0; c < m_iNumChannels; c++)
+	for (int c = 0; c < m_iNumChannels; c++)
     {
     	// retrieve LFO read idx
     	m_pCLfo->setReadIdx(m_pCLfoReadIdx[c]);
