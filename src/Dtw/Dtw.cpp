@@ -14,10 +14,6 @@ CDtw::~CDtw( void )
     for (int i = 0; i < m_iNumRows; i++)
         delete [] m_ppfCostMatrix[i];
     delete [] m_ppfCostMatrix;
-
-    for (int i = 0; i < m_iNumRows; i++)
-        delete [] m_ppiOptDirection[i];
-    delete [] m_ppiOptDirection;
     
     delete [] m_ppiPathResult[0];
     delete [] m_ppiPathResult[1];
@@ -37,10 +33,6 @@ Error_t CDtw::init( int iNumRows, int iNumCols )
     m_ppfCostMatrix = new float*[iNumRows];
     for (int i = 0; i < iNumRows; i++)
         m_ppfCostMatrix[i] = new float[iNumCols];
-
-    m_ppiOptDirection = new int*[iNumRows];
-    for (int i = 0; i < iNumRows; i++)
-        m_ppiOptDirection[i] = new int[iNumCols];
     
     m_ppiPathResult = new int*[2];
     m_ppiPathResult[0] = new int[m_iNumRows+m_iNumCols-2];
@@ -69,17 +61,21 @@ Error_t CDtw::process(float **ppfDistanceMatrix)
         return kFunctionInvalidArgsError;
 
     // init
+    int **ppiOptDirection = new int*[m_iNumRows];
+    for (int i = 0; i < m_iNumRows; i++)
+        ppiOptDirection[i] = new int[m_iNumCols];
+    
     m_ppfCostMatrix[0][0] = ppfDistanceMatrix[0][0];
-    m_ppiOptDirection[0][0] = -1;
+    ppiOptDirection[0][0] = -1;
     for (int i = 1; i < m_iNumRows; i++)
     {
         m_ppfCostMatrix[i][0] = m_ppfCostMatrix[i-1][0] + ppfDistanceMatrix[i][0];
-        m_ppiOptDirection[i][0] = kVert;
+        ppiOptDirection[i][0] = kVert;
     }
     for (int j = 1; j < m_iNumCols; j++)
     {
         m_ppfCostMatrix[0][j] = m_ppfCostMatrix[0][j-1] + ppfDistanceMatrix[0][j];
-        m_ppiOptDirection[0][j] = kHoriz;
+        ppiOptDirection[0][j] = kHoriz;
     }
 
     float directionCost[3] = {0,0,0};
@@ -96,18 +92,18 @@ Error_t CDtw::process(float **ppfDistanceMatrix)
             if (directionCost[kHoriz] <= directionCost[kVert] && directionCost[kHoriz] <= directionCost[kDiag])
             {
                 m_ppfCostMatrix[i][j] = directionCost[kHoriz] + ppfDistanceMatrix[i][j];
-                m_ppiOptDirection[i][j] = kHoriz;
+                ppiOptDirection[i][j] = kHoriz;
 
             }
             else if (directionCost[kVert] <= directionCost[kHoriz] && directionCost[kVert] <= directionCost[kDiag])
             {
                 m_ppfCostMatrix[i][j] = directionCost[kVert] + ppfDistanceMatrix[i][j];
-                m_ppiOptDirection[i][j] = kVert;
+                ppiOptDirection[i][j] = kVert;
             }
             else
             {
                 m_ppfCostMatrix[i][j] = directionCost[kDiag] + ppfDistanceMatrix[i][j];
-                m_ppiOptDirection[i][j] = kDiag;
+                ppiOptDirection[i][j] = kDiag;
             }
         }
 
@@ -118,9 +114,9 @@ Error_t CDtw::process(float **ppfDistanceMatrix)
     m_ppiPathResult[0][m_iPathLength-1] = curRow;
     m_ppiPathResult[1][m_iPathLength-1] = curCol;
     
-    while (m_ppiOptDirection[curRow][curCol] != -1)
+    while (ppiOptDirection[curRow][curCol] != -1)
     {
-        switch(m_ppiOptDirection[curRow][curCol])
+        switch(ppiOptDirection[curRow][curCol])
         {
             case kHoriz:    curCol -= 1;    break;
             case kVert:     curRow -= 1;    break;
@@ -132,6 +128,10 @@ Error_t CDtw::process(float **ppfDistanceMatrix)
         m_ppiPathResult[1][m_iPathLength-1] = curCol;
     }
 
+    for (int i = 0; i < m_iNumRows; i++)
+        delete [] ppiOptDirection[i];
+    delete [] ppiOptDirection;
+    
     return kNoError;
 }
 
@@ -142,11 +142,16 @@ int CDtw::getPathLength()
 
 float CDtw::getPathCost() const
 {
+    if (m_bInit == false)
+        return kNotInitializedError;
     return m_ppfCostMatrix[m_iNumRows-1][m_iNumCols-1];
 }
 
 Error_t CDtw::getPath( int **ppiPathResult ) const
 {
+    if (m_bInit == false)
+        return kNotInitializedError;
+    
     for (int i = 0; i < m_iPathLength; i++)
     {
         ppiPathResult[0][i] = m_ppiPathResult[0][m_iPathLength - 1 - i];
