@@ -65,6 +65,14 @@ private:
 
         kNumDirections
     };
+    
+    bool        m_bInit;
+    int         m_iNumRows;
+    int         m_iNumCols;
+    int         m_iPathLength;
+    float       **m_ppfCostMatrix;
+    int         **m_ppiOptDirection;
+    int         **m_ppiPathResult;
 };
 
 
