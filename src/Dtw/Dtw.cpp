@@ -115,6 +115,9 @@ Error_t CDtw::process(float **ppfDistanceMatrix)
     m_iPathLength = 1;
     int curRow = m_iNumRows-1;
     int curCol = m_iNumCols-1;
+    m_ppiPathResult[0][m_iPathLength-1] = curRow;
+    m_ppiPathResult[1][m_iPathLength-1] = curCol;
+    
     while (m_ppiOptDirection[curRow][curCol] != -1)
     {
         switch(m_ppiOptDirection[curRow][curCol])
@@ -124,9 +127,9 @@ Error_t CDtw::process(float **ppfDistanceMatrix)
             case kDiag:     curCol -= 1;    curRow -= 1;    break;
             default:        break;
         }
+        m_iPathLength++;
         m_ppiPathResult[0][m_iPathLength-1] = curRow;
         m_ppiPathResult[1][m_iPathLength-1] = curCol;
-        m_iPathLength++;
     }
 
     return kNoError;
@@ -144,13 +147,11 @@ float CDtw::getPathCost() const
 
 Error_t CDtw::getPath( int **ppiPathResult ) const
 {
-    for (int i = 0; i < m_iPathLength-1; i++)
+    for (int i = 0; i < m_iPathLength; i++)
     {
-        ppiPathResult[0][i] = m_ppiPathResult[0][m_iPathLength-2 - i];
-        ppiPathResult[1][i] = m_ppiPathResult[1][m_iPathLength-2 - i];
+        ppiPathResult[0][i] = m_ppiPathResult[0][m_iPathLength - 1 - i];
+        ppiPathResult[1][i] = m_ppiPathResult[1][m_iPathLength - 1 - i];
     }
-    ppiPathResult[0][m_iPathLength-1] = m_iNumRows-1;
-    ppiPathResult[1][m_iPathLength-1] = m_iNumCols-1;
     return kNoError;
 }
 
