@@ -151,6 +151,7 @@ SUITE(CombFilter)
 
         // half period length
         m_pCombFilter->reset();
+        m_pCombFilter->init(CCombFilterIf::kCombFIR, m_fMaxDelayLength, m_fSampleRate, m_iNumChannels);
         for (int c = 0; c < m_iNumChannels; c++)
             CSynthesis::generateSine (m_ppfInputData[c], .5F/m_fDelay, m_fSampleRate, m_iDataLength, .8F, static_cast<float>(c*M_PI_2));
         m_pCombFilter->setParam(CCombFilterIf::kParamGain, 1.F);
